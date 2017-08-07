@@ -8,51 +8,42 @@ import re
 
 
 def get_ports():
-    ports = serial.tools.list_ports.comports()
-    return ports
+    return serial.tools.list_ports.comports()
 
 
-def get_scale_address_OSX(portsList):
+def get_scale_address_unix(ports):
     # Check ports for a Duplex Serial USB connection
-    for i in range(0, len(portsList)):
-        # Need the two steps, first get the full address then split
-        comPort = portsList[i]
-        comPort = str(comPort).split(' ')
-
-        if comPort[-3] + comPort[-2] + comPort[-1] == 'USB<->Serial':
-            return comPort[0]   # Returns first part of address list
-        else:
-            pass
-    # If Weight not found throw error
-    raise TypeError('Could not find weight adress')
+    for port in ports:
+        properties = str(port).split(' - ')
+        name = properties[0]
+        identifier = properties[-1]
+        if identifier == 'USB <-> Serial':
+            return name
+    else:
+        raise IOError('Could not find scale address')
 
 
 def choose_scale_address():
-    ports = get_ports()
-    for i in range(0,len(ports)):
-        print ports[i]
+    for port in get_ports():
+        print port
 
-    port = raw_input(">>> Choose serial port address: ")
+    scale_port = raw_input(">>> Choose serial port address: ")
+    return scale_port
+
+
+def get_scale_address(ports=get_ports()):
+    # Check OS
+    os = platform.system()
+    if os in ('Darwin', 'Linux'):
+        port = get_scale_address_unix(ports)
+    elif os in ('Windows'):
+        raise NotImplementedError('Windows not implemented... yet!')
+    else:
+        raise NotImplementedError('Unknown platform %s' % os)
     return port
 
 
-def get_scale_address(portsList = []):
-    # If portsList is empty, get ports
-    if not portsList:
-        portsList = get_ports()
-    else:
-        pass
-
-    # Check OS
-    os = platform.system()
-    if os == 'Darwin':
-        comPort = get_scale_address_OSX(portsList)
-        return comPort
-    else:
-        pass
-
-
-def read_serial(port, raw_output = False):
+def read_serial(port, raw_output=False):
     ser = serial.Serial(port, baudrate=9600, timeout=5)
     reading = str(ser.readline())
 
@@ -67,13 +58,7 @@ def read_serial(port, raw_output = False):
         return reading
 
 
-weightPort = get_scale_address() # OR choose_scale_address()
-reading = 0
-
+scalePort = get_scale_address() # OR choose_scale_address()
 while 1:
-    reading = read_serial(weightPort)
+    reading = read_serial(scalePort)
     print reading, type(reading)
-
-
-
-
