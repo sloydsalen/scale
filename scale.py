@@ -1,9 +1,7 @@
 import serial
 import serial.tools.list_ports
-import subprocess
-import numpy as np
-from matplotlib import pyplot as plt
 import platform
+import time
 import re
 
 
@@ -44,7 +42,9 @@ def get_scale_address(ports=get_ports()):
 
 
 def read_serial(port, raw_output=False):
-    ser = serial.Serial(port, baudrate=9600, timeout=5)
+    ser = serial.Serial(port, baudrate=9600)#, timeout=.5)
+    ser.flushInput()
+    ser.flushOutput()
     reading = str(ser.readline())
 
     if raw_output is False:
@@ -58,7 +58,29 @@ def read_serial(port, raw_output=False):
         return reading
 
 
-scalePort = get_scale_address() # OR choose_scale_address()
+def write_to_file(data, time, filename='result.txt'):
+    with open(filename,'a') as f:
+        f.write(str("%.2f" %time) + '\t' + str(data) + '\n')
+
+
+def write_header_in_file(filename):
+    with open(filename, 'a') as f:
+        f.write('\nTIME(s)\tWEIGHT(g)\n')
+        f.close()
+
+scalePort = get_scale_address()
+the_time = 0
+filename = 'result.txt'
+
+write_header_in_file(filename)
+print 'TIME(s)\tWEIGHT (g)'
+
 while 1:
+    start = time.time()
     reading = read_serial(scalePort)
-    print reading, type(reading)
+    stop = time.time()
+    the_time += (stop - start)
+    write_to_file(reading, the_time, filename)
+
+    print "%.2f"%the_time ,'\t', reading
+
