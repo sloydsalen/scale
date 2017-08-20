@@ -95,7 +95,6 @@ class HCB123:
         print("Choose command number:")
         print("1 - Show scale reading")
         print("2 - Print to file")
-        print("3 - Print filename and path")
         print("----------------------")
 
 
