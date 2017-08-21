@@ -2,6 +2,7 @@ import serial
 import serial.tools.list_ports as sertools
 import time
 import re
+import platform
 
 
 class HCB123:
@@ -107,20 +108,25 @@ class HCB123:
 
 
 if __name__ == '__main__':
+    system_os = platform.system()
+    print (system_os)
     scale = HCB123()
     scale.restart_port()
     scale.print_startup_message()
 
     try:
         for retry in range(3):
-            command = input(">>> ")
+            command = str(input(">>> "))
             if command == '1':
                 scale.print_header()
                 while True:
                     scale.print_data()
 
             elif command == '2':
-                user_filename = input("Choose filename:\n>>> ")
+                if system_os == 'Darwin': #(OSX)
+                    user_filename = raw_input('>>> Choose filename:\n>>> ')
+                else:
+                    user_filename = input('>>> Choose filename: \n>>> ')
                 scale.set_filename(user_filename)
                 scale.write_header_in_file()
                 print("----------------------")
@@ -129,7 +135,7 @@ if __name__ == '__main__':
                     scale.write_to_file()
                     print(str("%.2f" % scale.timer) + "\t" + str(scale.data))
             else:
-                print(">>> Sorry, " + "\"" + command + "\"" + " is not a valid command. Try again")
+                print(">>> Sorry, " + "\"" + str(command) + "\"" + " is not a valid command. Try again")
         print("ERROR: You have tried too many times.")
     except KeyboardInterrupt:
         scale.close_port()
