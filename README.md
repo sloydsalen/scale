@@ -68,6 +68,6 @@ TIME(s)	WEIGHT(g)
 
 ## Platforms
 - OSX: Working
-- Windows: Working (on Windows-branch)
+- Windows: Working
 - Rasbian: Working
 - Linux: Working
