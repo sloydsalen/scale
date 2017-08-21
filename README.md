@@ -63,10 +63,11 @@ TIME(s)	WEIGHT(g)
 
 ## Requirements
 - Python v3.x
-- pyserial v3.4+
+- pyserial v3.x
+- regex v2017.7.x
 
 ## Platforms
 - OSX: Working
-- Windows: in development
+- Windows: Working (on Windows-branch)
 - Rasbian: Working
 - Linux: Working
