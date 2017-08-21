@@ -25,7 +25,6 @@ class HCB123:
         else:
             self.filename = str(filename)
 
-
     def initialize_scale(self):
         ports = self.get_ports()
         for port in ports:
@@ -47,18 +46,27 @@ class HCB123:
     def open_port(self, port, baud=9600):
         return serial.Serial(port.device, baud)
 
+    def restart_port(self):
+        self.SERIAL.close()
+        time.sleep(1)
+        self.open_port(self.port)
+
     def close_port(self):
         return serial.Serial.close(self.SERIAL)
 
     def read_serial(self, raw_data=False):
+        self.SERIAL.close()
+        # time.sleep(1)
+        self.open_port(self.port)
         self.SERIAL = self.open_port(self.port)
         self.SERIAL.flush()
         self.raw_data = self.SERIAL.readline()
 
         if raw_data is False:  # Return parsed data as float
-            parsed_data = re.search("([+-]) *([0-9]*\.[0-9]*)", self.raw_data)
+            parsed_data = re.search(b"([+-]) *([0-9]*\.[0-9]*)", self.raw_data)
             if parsed_data is not None:
-                self.data = parsed_data.group(1) + parsed_data.group(2)
+                self.data = str(parsed_data.group(1)).strip('\'b') + str(parsed_data.group(2)).strip(
+                    '\'b')  # str(parsed_data.group(1)) + str(parsed_data.group(2))
                 return float(self.data)
             return float("nan")
         else:  # Return raw data from serial
@@ -82,8 +90,8 @@ class HCB123:
         return self.timer, self.data
 
     def print_data(self):
-        scale.get_data()
-        print(str("%.2f" % self.timer) + "\t" + str(self.data))
+        self.get_data()
+        print(str("%.2f" % self.timer) + "\t" + str(self.data))  # , type(self.data))
 
     def print_header(self):
         print('\nTIME(s)\tWEIGHT(g)\n')
@@ -100,24 +108,32 @@ class HCB123:
 
 if __name__ == '__main__':
     scale = HCB123()
+    scale.restart_port()
     scale.print_startup_message()
 
-    command = input(">>> ")
-
     try:
-        if command == 1:
-            scale.print_header()
-            while True:
-                scale.print_data()
-        elif command == 2:
-            user_filename = raw_input("Choose filename:\n>>> ")
-            scale.set_filename(user_filename)
-            scale.write_header_in_file()
-            print("----------------------")
-            print("\nPrinting to file: " + scale.filename)
-            while True:
-                scale.write_to_file()
-                print(str("%.2f" % scale.timer) + "\t" + str(scale.data))
+        for retry in range(3):
+            command = input(">>> ")
+            if command == '1':
+                scale.print_header()
+                while True:
+                    scale.print_data()
+
+            elif command == '2':
+                user_filename = input("Choose filename:\n>>> ")
+                scale.set_filename(user_filename)
+                scale.write_header_in_file()
+                print("----------------------")
+                print("\nPrinting to file: " + scale.filename)
+                while True:
+                    scale.write_to_file()
+                    print(str("%.2f" % scale.timer) + "\t" + str(scale.data))
+            else:
+                print(">>> Sorry, " + "\"" + command + "\"" + " is not a valid command. Try again")
+        print("ERROR: You have tried too many times.")
     except KeyboardInterrupt:
         scale.close_port()
-        pass
+        if command == '2':
+            print(">>> Aborted by user. Data saved to " + scale.filename)
+        else:
+            print(">>> Aborted by user. No data saved")
